@@ -3,5 +3,5 @@
     "file_path": "",
     "mode": "clean",
     "time_format": "%Y-%m-%d %H:%M:%S",
-    "notify": "ERR,WRN",
+    "notify_cats": "ERR,WRN",
 }

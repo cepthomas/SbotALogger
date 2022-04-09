@@ -42,7 +42,7 @@ class SbotLogger():
         
             settings = sublime.load_settings("SbotLogger.sublime-settings")
 
-            self._notifs = settings['notify'].split(',')
+            self._notifs = settings['notify_cats'].split(',')
 
             if settings['mode'] != 'off':
                 self._mode = settings['mode']
