@@ -3,38 +3,6 @@ import sys
 import time
 import sublime
 
-# TODO add category, like print("ERR", "blabla") then filter to taste
-
-# Because ST takes ownership of the python module loading and execution, it just dumps any load/parse and runtime exceptions
-# to the console. This can be annoying because it means you have to have the console open pretty much all the time.
-# First attempt was to hook the console stdout but it was not very cooperative. So now there are try/except around all the
-# ST callback functions and this works to catch runtime errors and pop up a message box. Import/parse errors still go to the
-# console so you have to keep an eye open there while developing but they should resolve quickly.
-
-# ====================== ST internal logger (sublime.py) =======================
-# class _LogWriter(io.TextIOBase):
-#     def __init__(self):
-#         self.buf = None
-# 
-#     def flush(self):
-#         b = self.buf
-#         self.buf = None
-#         if b is not None and len(b):
-#             sublime_api.log_message(b)
-# 
-#     def write(self, s):
-#         if self.buf is None:
-#             self.buf = s
-#         else:
-#             self.buf += s
-#         if '\n' in s or '\r' in s:
-#             self.flush()
-# 
-# 
-# sys.stdout = _LogWriter()
-# sys.stderr = _LogWriter()
-# 
-
 
 _logger = None
 
@@ -43,6 +11,7 @@ _logger = None
 def plugin_loaded():
     # This should only be called once per ST instance.
     global _logger
+
     _logger = SbotLogger()
     _logger.start()
 
@@ -50,6 +19,7 @@ def plugin_loaded():
 #-----------------------------------------------------------------------------------
 def plugin_unloaded():
     global _logger
+
     _logger.stop()
     
 
@@ -61,6 +31,7 @@ class SbotLogger():
     _log_fn = None
     _time_format = None
     _mode = None
+    _notifs = []
 
     def start(self):
         if self._prev_stdout is None:
@@ -70,6 +41,8 @@ class SbotLogger():
             sys.stderr = self
         
             settings = sublime.load_settings("SbotLogger.sublime-settings")
+
+            self._notifs = settings['notify'].split(',')
 
             if settings['mode'] != 'off':
                 self._mode = settings['mode']
@@ -105,3 +78,6 @@ class SbotLogger():
             if self._mode is not None:
                 with open(self._log_fn, "a") as log:
                     log.write(outmsg)
+
+            if cmsg.split(' ')[0] in self._notifs:
+                sublime.message_dialog(cmsg)
