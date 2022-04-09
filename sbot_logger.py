@@ -3,7 +3,38 @@ import sys
 import time
 import sublime
 
-# TODO add category, like print("ERR", "blabla") the filter to taste
+# TODO add category, like print("ERR", "blabla") then filter to taste
+
+# Because ST takes ownership of the python module loading and execution, it just dumps any load/parse and runtime exceptions
+# to the console. This can be annoying because it means you have to have the console open pretty much all the time.
+# First attempt was to hook the console stdout but it was not very cooperative. So now there are try/except around all the
+# ST callback functions and this works to catch runtime errors and pop up a message box. Import/parse errors still go to the
+# console so you have to keep an eye open there while developing but they should resolve quickly.
+
+# ====================== ST internal logger (sublime.py) =======================
+# class _LogWriter(io.TextIOBase):
+#     def __init__(self):
+#         self.buf = None
+# 
+#     def flush(self):
+#         b = self.buf
+#         self.buf = None
+#         if b is not None and len(b):
+#             sublime_api.log_message(b)
+# 
+#     def write(self, s):
+#         if self.buf is None:
+#             self.buf = s
+#         else:
+#             self.buf += s
+#         if '\n' in s or '\r' in s:
+#             self.flush()
+# 
+# 
+# sys.stdout = _LogWriter()
+# sys.stderr = _LogWriter()
+# 
+
 
 _logger = None
 

@@ -1,5 +1,6 @@
 {
+    // See README.md.
     "file_path": "",
-    "mode": "append",
+    "mode": "clean",
     "time_format": "%Y-%m-%d %H:%M:%S",
 }
