@@ -52,7 +52,7 @@ class SbotLogger():
                     self._log_fn = os.path.join(sublime.packages_path(), 'User', 'SbotStore', 'sbot.log')
 
             if len(settings['time_format']) > 0:
-                self._time_format = settings['time_format']  # TODO msec
+                self._time_format = settings['time_format']  # TODO msec. Doesn't like .%f.
 
             # Clean old log maybe.
             if self._mode == 'clean':
