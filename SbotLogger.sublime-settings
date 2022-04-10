@@ -2,6 +2,7 @@
     // See README.md.
     "file_path": "",
     "mode": "clean",
-    "time_format": "%Y-%m-%d %H:%M:%S",
-    "notify_cats": "ERR,WRN",
+    "time_format": "",
+    "ignore_cats": [],
+    "notify_cats": ["ERR", "WRN"],
 }
