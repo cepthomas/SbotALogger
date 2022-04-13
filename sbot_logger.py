@@ -5,6 +5,7 @@ from datetime import datetime
 import sublime
 
 
+# The singleton logger.
 _logger = None
 
 
