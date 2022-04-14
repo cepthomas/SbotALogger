@@ -94,7 +94,7 @@ class SbotLogger():
                 # Maybe write to file.
                 if self._mode is not None:
                     with open(self._log_fn, "a") as log:
-                        log.write(f'{cat} {outmsg}')
+                        log.write(outmsg)
 
                 if cat in self._notif_cats:
                     sublime.message_dialog(cmsg)
