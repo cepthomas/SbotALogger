@@ -51,7 +51,7 @@ class SbotLogger():
                     with open(self._log_fn, "w") as log:
                         pass
 
-                print("INF Stealing stdout and stderr!")
+                # print("INF Stealing stdout and stderr!")
                 self._console_stdout = sys.stdout
                 self._console_stderr = sys.stderr
                 sys.stdout = self
