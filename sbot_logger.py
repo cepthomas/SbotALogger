@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import shutil
 from datetime import datetime
 import sublime
 
@@ -40,14 +41,21 @@ class SbotLogger():
                 # Get the settings.
                 settings = sublime.load_settings("SbotLogger.sublime-settings")
                 self._mode = settings.get('mode')
-                fp = settings.get("file_path")
-                self._log_fn = fp if len(fp) > 0 else os.path.join(sublime.packages_path(), 'User', 'SbotStore', 'sbot.log')
+                fp = settings.get("file_path") if len(settings.get("file_path")) > 0 else os.path.join(sublime.packages_path(), 'User', 'SbotStore')
+                self._log_fn = os.path.join(fp, 'sbot.log')
                 self._notif_cats = settings.get('notify_cats')
                 self._ignore_cats = settings.get('ignore_cats')
                 self._time_format = settings.get('time_format')
 
                 # Clean old log maybe.
                 if self._mode == 'clean':
+                    # Make a backup.
+                    bup = os.path.join(fp, 'sbot_old.log')
+                    try:
+                        shutil.copyfile(self._log_fn, bup)
+                    except:
+                        print(f'ERR {sys.exc_info()}')
+                    # Now empty the old file.
                     with open(self._log_fn, "w") as log:
                         pass
 
@@ -65,6 +73,28 @@ class SbotLogger():
             sys.stdout = self._console_stdout
             sys.stderr = self._console_stderr
             print("INF Restored stdout and stderr!")
+
+
+    # from class _LogWriter(io.TextIOBase):
+    # def __init__(self):
+    #     self.buf = None
+    # def flush(self):
+    #     b = self.buf
+    #     self.buf = None
+    #     if b is not None and len(b):
+    #         sublime_api.log_message(b) # TODO where does this go?
+    #         self._console_stdout.write(f'>>>>>>> {b}')
+    #         sys.stdout.write(f'>>>sys>>>> {b}')
+    # def write(self, s):
+    #     if self.buf is None:
+    #         self.buf = s
+    #     else:
+    #         self.buf += s
+    #     if '\n' in s or '\r' in s:
+    #         self.flush()
+
+
+
 
     def write(self, message):
         # Write one.

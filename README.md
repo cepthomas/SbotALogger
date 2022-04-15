@@ -13,7 +13,7 @@ None
 ## Settings
 | Setting            | Description                     | Options   |
 | :--------          | :-------                        | :------   |
-| `file_path`        | Full path to the log file       | if empty default is `%data_dir%\Packages\User\SbotStore\sbot.log`  |
+| `file_path`        | Full path to the log file       | if empty default is `%data_dir%\Packages\User\SbotStore` |
 | `mode`             | File add mode                   | `append` OR `clean` (on start) OR `off` |
 | `time_format`      | How to format (strftime)        | `strftime format` OR empty (default timestamp) OR null (no timestamp) |
 | `ignore_cats`      | Ignore these user categories    | comma separated strings |
