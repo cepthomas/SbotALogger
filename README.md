@@ -6,6 +6,8 @@ Examines the first word to identify as a user supplied category.
 Simple categories by prefacing message with meaningful strings. If they appear in
 `notify_cats`, a dialog is presented. Those in `ignore_cats` are ignored.
 
+Built for ST4 on Windows and Linux.
+
 ## Commands
 None
 
