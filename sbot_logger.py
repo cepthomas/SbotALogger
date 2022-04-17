@@ -2,11 +2,33 @@ import os
 import sys
 import time
 import shutil
+import pathlib
 from datetime import datetime
 import sublime
 
 
+
+
 # TODO more debugging tools for plugins. More print() funcs?
+
+#TODO from inspect import currentframe, getframeinfo
+# frameinfo = getframeinfo(currentframe())
+# print(frameinfo.filename, frameinfo.lineno)
+#
+# from inspect import currentframe, getframeinfo
+# cf = currentframe()
+# filename = getframeinfo(cf).filename
+# print "This is line 5, python says line ", cf.f_lineno 
+# print "The filename is ", filename
+# 
+# def Deb(msg = None):
+# print(f"Debug {sys._getframe().f_back.f_lineno}: {msg if msg is not None else ''}")
+# 
+# Handy if used in a common file - prints file name, line number and function of the caller:
+# import inspect
+# def getLineInfo():
+#     print(inspect.stack()[1][1],":",inspect.stack()[1][2],":",
+#           inspect.stack()[1][3])
 
 
 
@@ -112,8 +134,13 @@ class SbotLogger():
                 # Get the settings.
                 settings = sublime.load_settings("SbotLogger.sublime-settings")
                 self._mode = settings.get('mode')
-                fp = settings.get("file_path") if len(settings.get("file_path")) > 0 else os.path.join(sublime.packages_path(), 'User', 'SbotStore')
-                self._log_fn = os.path.join(fp, 'sbot.log')
+
+                file_path = settings.get('file_path')
+                if file_path is None or len(file_path) == 0:
+                    file_path = os.path.join(sublime.packages_path(), 'User', 'SbotStore')
+                pathlib.Path(file_path).mkdir(parents=True, exist_ok=True)
+                self._log_fn = os.path.join(file_path, 'sbot.log')
+
                 self._notif_cats = settings.get('notify_cats')
                 self._ignore_cats = settings.get('ignore_cats')
                 self._time_format = settings.get('time_format')
@@ -121,12 +148,8 @@ class SbotLogger():
                 # Clean old log maybe.
                 if self._mode == 'clean':
                     # Make a backup.
-                    bup = os.path.join(fp, 'sbot_old.log')
-                    try:
-                        shutil.copyfile(self._log_fn, bup)
-                    except:
-                        print(f'ERR {sys.exc_info()}')
-                    # Empty the old file.
+                    bup = self._log_fn.replace('.log', '_old.log')
+                    shutil.copyfile(self._log_fn, bup)
                     with open(self._log_fn, "w") as log:
                         pass
 
@@ -135,16 +158,18 @@ class SbotLogger():
                 self._console_stderr = sys.stderr
                 sys.stdout = self
                 sys.stderr = self
-                print("INF I have stolen stdout and stderr!")
+                print("INF Stolen stdout and stderr!")
             except Exception as e:
-                logging.exception(e)
+                print(f'ERR {sys.exc_info()}')
+                self.stop()
 
     def stop(self):
         ''' Restores stdout/stderr. '''
+        print("INF Restore stdout and stderr!")
         if self._console_stdout is not None:
             sys.stdout = self._console_stdout
+        if self._console_stderr is not None:
             sys.stderr = self._console_stderr
-            print("INF I have restored stdout and stderr!")
 
     def write(self, message):
         ''' Write one. '''
