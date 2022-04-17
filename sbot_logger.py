@@ -29,6 +29,32 @@ import sublime
 # def getLineInfo():
 #     print(inspect.stack()[1][1],":",inspect.stack()[1][2],":",
 #           inspect.stack()[1][3])
+# 
+# measured:
+# no measurement
+# 0.01 sec
+# 0.04 sec
+# inspect.stack (run 10% as many times, because slow)
+# 0.44 sec
+# 1.58 sec
+# traceback.extract_stack
+# 0.18 sec
+# 0.61 sec
+# traceback.extract_stack + limit
+# 0.02 sec
+# 0.06 sec
+# sys.getframe + traceback
+# 0.02 sec
+# 0.05 sec
+# sys.getframe + co_code
+# 0.01 sec
+# 0.04 sec
+# sys.getframe + inspect
+# 0.11 sec
+# 0.13 sec
+# inspect.currentframe + inspect
+# 0.10 sec
+# 0.13 sec
 
 
 
@@ -147,9 +173,11 @@ class SbotLogger():
 
                 # Clean old log maybe.
                 if self._mode == 'clean':
-                    # Make a backup.
-                    bup = self._log_fn.replace('.log', '_old.log')
-                    shutil.copyfile(self._log_fn, bup)
+                    if os.path.exists(self._log_fn):
+                        # Make a backup.
+                        bup = self._log_fn.replace('.log', '_old.log')
+                        shutil.copyfile(self._log_fn, bup)
+                    # Clear log file.
                     with open(self._log_fn, "w") as log:
                         pass
 
@@ -160,7 +188,8 @@ class SbotLogger():
                 sys.stderr = self
                 print("INF Stolen stdout and stderr!")
             except Exception as e:
-                print(f'ERR {sys.exc_info()}')
+                import traceback
+                traceback.print_exception(e)
                 self.stop()
 
     def stop(self):
