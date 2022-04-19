@@ -4,5 +4,5 @@
     "mode": "clean",
     "time_format": "",
     "ignore_cats": [],
-    "notify_cats": ["ERR", "WRN"],
+    "notify_cats": ["ERRR", "WARN"],
 }

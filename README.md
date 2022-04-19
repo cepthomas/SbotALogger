@@ -1,10 +1,12 @@
 # SbotLogger
 
-Intercepts the console write and copies to a file. Adds optional timestamp.
-Examines the first word to identify as a user supplied category.
+- Intercepts the console write and copies to a file.
+- Adds optional timestamp.
+- Examines the first word to identify as a user supplied category. These are fixed at
+  four characters to match the log_message(cat, message) function in [SbotCommon](https://github.com/cepthomas/SbotCommon).
+- If the category appear in `notify_cats`, a dialog is presented. Those in `ignore_cats` are ignored.
+- Displays the stack trace from unhandled exceptions once (assumes you have to go fix your problem before continuing).
 
-Simple categories by prefacing message with meaningful strings. If they appear in
-`notify_cats`, a dialog is presented. Those in `ignore_cats` are ignored.
 
 Built for ST4 on Windows and Linux.
 
