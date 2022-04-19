@@ -1,5 +1,6 @@
-# SbotLogger
+# SbotALogger
 
+- The 'A' is to force this to load first so logging is set up early.
 - Intercepts the console write and copies to a file.
 - Adds optional timestamp.
 - Examines the first word to identify as a user supplied category. These are fixed at

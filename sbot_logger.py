@@ -17,7 +17,7 @@ _logger = None
 def plugin_loaded():
     # This should only be called once per ST instance.
     global _logger
-    _logger = SbotLogger()
+    _logger = SbotALogger()
     _logger.start()
     pass
 
@@ -30,7 +30,7 @@ def plugin_unloaded():
 
 
 #-----------------------------------------------------------------------------------
-class SbotLogger(io.TextIOBase):
+class SbotALogger(io.TextIOBase):
 
     # The outputs:
     _console_stdout = None
@@ -52,7 +52,7 @@ class SbotLogger(io.TextIOBase):
         if self._console_stdout is None:
             try:
                 # Get the settings.
-                settings = sublime.load_settings("SbotLogger.sublime-settings")
+                settings = sublime.load_settings("SbotALogger.sublime-settings")
                 self._mode = settings.get('mode')
 
                 file_path = settings.get('file_path')
