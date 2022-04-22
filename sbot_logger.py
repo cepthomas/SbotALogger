@@ -12,10 +12,12 @@ import sublime
 # The singleton logger.
 _logger = None
 
+_enable_trace = True
+
 
 #-----------------------------------------------------------------------------------
 def plugin_loaded():
-    # This should only be called once per ST instance.
+    # Called once per ST instance.
     global _logger
     _logger = SbotALogger()
     _logger.start()
@@ -31,7 +33,6 @@ def plugin_unloaded():
 
 #-----------------------------------------------------------------------------------
 class SbotALogger(io.TextIOBase):
-
     # The outputs:
     _console_stdout = None
     _console_stderr = None
@@ -65,6 +66,8 @@ class SbotALogger(io.TextIOBase):
                 self._ignore_cats = settings.get('ignore_cats')
                 self._time_format = settings.get('time_format')
 
+                # print(f'{self._notif_cats} | {self._ignore_cats} | {self._time_format}')
+
                 # Clean old log maybe.
                 if self._mode == 'clean':
                     if os.path.exists(self._log_fn):
@@ -83,11 +86,8 @@ class SbotALogger(io.TextIOBase):
                 print("INFO Stolen stdout and stderr!")
 
             except Exception as e:
-                # Last ditch debug help.
-                with open(self._log_fn, 'a') as f:
-                    f.write(f'!!!! exception')
-                    import traceback
-                    traceback.print_exc(file=f)
+                # Last ditch debug help. Assumes print() is broken.
+                self._trace('Exception!!', e)
                 self.stop()
 
     def stop(self):
@@ -99,11 +99,20 @@ class SbotALogger(io.TextIOBase):
             sys.stderr = self._console_stderr
 
     def write(self, message):
-        ''' Write one. Hooked stdout/stderr. '''
+        ''' Write one. Hooked stdout/stderr. Process unhandled exceptions. '''
         # Warning! Do not print() in here - recursive death.
-        cmsg = message.rstrip()
+
+
+        # self._trace(message) TODO this msg isn't exactly like what gets print() - broken into multiple lines, missing white space...
+        cmsg = message #.rstrip()
+
+        cmsg = cmsg.replace('\n', 'N\n')
+        cmsg = cmsg.replace('\r', 'R\r')
+
+
         if len(cmsg) > 0:
-            # Sniff the line. Process unhandled exceptions.
+
+            # Sniff the line. Check for category.
             cat = None
             parts = cmsg.split(' ')
 
@@ -117,21 +126,29 @@ class SbotALogger(io.TextIOBase):
                     cmsg = f'{cat} {cmsg}'
 
                 elif len(parts[0]) == 4: # 4 is fixed for all internal logging.
-                    # Finished exc block?
+                    # Finished exc block by virtue of non-exception record?
                     if self._exc_text is not None and self._exc_count < 1: # Don't pester the user, do this once.
-                        sublime.message_dialog('\n'.join(self._exc_text))
                         self._exc_count += 1
+                        sublime.message_dialog('\n'.join(self._exc_text))
                     self._exc_text = None
 
                     # Back to normal.
                     cat = parts[0]
 
-                elif self._exc_text is not None: # Currently in an exc block.
+                elif self._exc_text is not None:
+                    # Currently in an exc block.
                     self._exc_text.append(cmsg)
                     cat = 'UEXC'
                     cmsg = f'{cat} {cmsg}'
+
+                    # If the last entry was ':', we're done - probably not robust.
+                    if self._exc_text[-2] == ':' and self._exc_count < 1: # Don't pester the user, do this once.
+                        self._exc_count += 1
+                        sublime.message_dialog('\n'.join(self._exc_text))
+                        self._exc_text = None
                     
-                else: # Other print() - loose or from internal ST.
+                else:
+                    # Other print() - loose or from internal ST.
                     cat = '----'
                     cmsg = f'{cat} {cmsg}'
 
@@ -157,3 +174,14 @@ class SbotALogger(io.TextIOBase):
 
                 if cat in self._notif_cats:
                     sublime.message_dialog(cmsg)
+
+    def _trace(self, message, exc=None):
+        ''' Debug helper because stdout is probably hosed. '''
+        if _enable_trace:
+            trc_file = self._log_fn.replace('.log', '_trace.log')
+
+            with open(trc_file, 'a') as f:
+                f.write(f'{message}\n')
+                if exc is not None:
+                    import traceback
+                    traceback.print_exception(exc, file=f)
