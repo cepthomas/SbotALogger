@@ -23,14 +23,12 @@ def plugin_loaded():
     global _logger
     _logger = SbotALogger()
     _logger.start()
-    pass
 
 
 #-----------------------------------------------------------------------------------
 def plugin_unloaded():
     global _logger
     _logger.stop()
-    pass
 
 
 #-----------------------------------------------------------------------------------
@@ -47,17 +45,16 @@ class SbotALogger(io.TextIOBase):
     _notif_cats = None
 
     # Buffer.
-    _current_msg = ''
+    _current_line = ''
     _current_cat = '????'
-    _msg_time = None  # timestamp of beginning
+    _line_time = None
 
     # Processing unhandled exceptions.
-    _exc_text = ''
     _exc_count = 0
-    _exc_end = False
+    _exc_stack_end = False
 
     # Debugging.
-    _enable_trace = True
+    _enable_trace = False
 
     def start(self):
         ''' Redirects stdout/stderr. '''
@@ -78,8 +75,6 @@ class SbotALogger(io.TextIOBase):
             self._ignore_cats = settings.get('ignore_cats')
             self._time_format = settings.get('time_format')
 
-            # print(f'{self._notif_cats} | {self._ignore_cats} | {self._time_format}')
-
             # Maybe clean old log.
             if self._mode == 'clean':
                 if os.path.exists(self._log_fn):
@@ -90,12 +85,13 @@ class SbotALogger(io.TextIOBase):
                 with open(self._log_fn, "w"):
                     pass
 
-            print("Stealing stdout and stderr...")
+            # Hook stdio.
+            print("Stealing stdout and stderr.")
             self._console_stdout = sys.stdout
             self._console_stderr = sys.stderr
             sys.stdout = self
             sys.stderr = self
-            print("INFO Stolen stdout and stderr!")
+            # print("Stolen stdout and stderr.")
 
         except Exception as e:
             # Last ditch debug help. Assumes print() is broken.
@@ -104,53 +100,28 @@ class SbotALogger(io.TextIOBase):
 
     def stop(self):
         ''' Restore stdout/stderr. '''
-        print("INFO Restore stdout and stderr!")
+        print("Restoring stdout and stderr.")
         if self._console_stdout is not None:
             sys.stdout = self._console_stdout
         if self._console_stderr is not None:
             sys.stderr = self._console_stderr
 
     def write(self, message):
-        ''' Process one part of text to stdout. Strings arrive but have to be concatenated until
-        EOL appears. Process unhandled exceptions.
+        ''' Process one part of text to stdout.
+        Strings arrive but have to be concatenated until EOL appears.
+        Process unhandled exceptions and notify user.
         Warning! Do not print() in here - recursive death.
         '''
-#Traceback (most recent call last):N
-#  File "C:\Program Files\Sublime Text\Lib\python38\sublime_plugin.py", line 1482, in run_N
-#    return self.run()
-#N
-#  File "C:\Users\cepth\AppData\Roaming\Sublime Text\Packages\SbotDev\sbot_dev.py", line 92, in runN
-#    i = 999 / 0
-#N
-#ZeroDivisionError
-#: 
-#division by zero
-#N
 
-
-# 2022-04-22 13:05:54.362 UEXC Traceback (most recent call last):N
-# 2022-04-22 13:05:54.362 UEXC   File "C:\Program Files\Sublime Text\Lib\python38\sublime_plugin.py", line 1482, in run_N
-# 2022-04-22 13:05:54.363 UEXC     return self.run()N
-# 2022-04-22 13:05:54.364 UEXC   File "C:\Users\cepth\AppData\Roaming\Sublime Text\Packages\SbotDev\sbot_dev.py", line 92, in runN
-# 2022-04-22 13:05:54.365 UEXC     i = 999 / 0N
-# 2022-04-22 13:05:54.366 UEXC ZeroDivisionError: division by zeroN
-
-
-        # Test for imminent end of exception stack. TODO is there a better way than this?
+        # Test for imminent end of exception stack by looking for a single colon. This is a bit clumsy.
         # ZeroDivisionError: division by zero arrives as sequence 'ZeroDivisionError', ': ', 'division by zero\n'.
         if message.strip() == ':':
-            self._exc_end = True
+            self._exc_stack_end = True
 
-        # Either starting a new message or in the middle of one.
-        if len(self._current_msg) == 0:  # New message/line.
-
-            # ?? first check/process exception text
-
-            # Start anew.
-            self._msg_time = time.localtime()
-            # self._current_msg = message
-            # self._exc_text = ''
-            # self._exc_end = False
+        # Either starting a new line or in the middle of one.
+        if len(self._current_line) == 0:
+            # Start a new line.
+            self._line_time = time.localtime()
 
             # Check for category.
             parts = message.split(' ')
@@ -158,80 +129,69 @@ class SbotALogger(io.TextIOBase):
             if len(parts) > 0:
                 # Check for new exception stack.
                 if parts[0] == 'Traceback':
-                    self._process_current_exc_stack()
+                    self._process_current_exc()
                     self._current_cat = CAT_UEXC
-                    self._current_msg = CAT_UEXC + ' ' + message # insert cat
-                    self._exc_text += message
+                    self._current_line = CAT_UEXC + ' ' + message  # insert cat
 
-                # Check for canned category preamble from common slog().
-                elif len(parts[0]) == 4:  # 4 is fixed for all internal logging. TODO too brittle - accept any sentence with four letter start word!
-                    self._process_current_exc_stack()
+                # Check for canned category preamble from common slog(). 4 is fixed for all internal logging (SbotCommon.slog().
+                # This is a bit brittle - will accept any sentence with four letter start word! Maybe that's not a big deal.
+                elif len(parts[0]) == 4:  
+                    self._process_current_exc()
                     self._current_cat = parts[0]
-                    self._current_msg = message
+                    self._current_line = message
 
                 # Continue exception stack.
                 elif self._current_cat == CAT_UEXC:
-                    self._current_msg = CAT_UEXC + ' ' + message # insert cat
-                    self._exc_text += message
+                    self._current_line = CAT_UEXC + ' ' + message  # insert cat
 
                 # Assume loose print() or ST internals, etc.
                 else:
                     self._current_cat = CAT_OTHER
-                    self._current_msg = CAT_OTHER + ' ' + message # insert cat
+                    self._current_line = CAT_OTHER + ' ' + message  # insert cat
 
         else:  # continuing line
-            self._current_msg += message
-            if self._current_cat == CAT_UEXC:
-                self._exc_text += message
+            self._current_line += message
 
         # Check for line complete.
-        if '\n' in self._current_msg:
-
-            if self._current_cat == CAT_UEXC:
-                self._exc_text.append(self._current_msg)
-
-
+        if '\n' in self._current_line:
             # Format and print the log record.
             if self._current_cat not in self._ignore_cats:
                 # Format time.
                 if self._time_format is None:
-                    outmsg = f'{self._current_msg}'
+                    out_line = f'{self._current_line}'
                 elif len(self._time_format) > 0:
-                    outmsg = f'{time.strftime(self._time_format, self._msg_time)} {self._current_msg}'
+                    out_line = f'{time.strftime(self._time_format, self._line_time)} {self._current_line}'
                 else:
                     time_str = f'{str(datetime.now())}'[0:-3]
-                    outmsg = f'{time_str} {self._current_msg}'
+                    out_line = f'{time_str} {self._current_line}'
 
                 # Always write to console.
-                self._console_stdout.write(outmsg)
+                self._console_stdout.write(out_line)
                 self._console_stdout.flush()
 
                 # Maybe write to file.
                 if self._mode != 'off':
                     with open(self._log_fn, "a") as log:
-                        log.write(outmsg)
+                        log.write(out_line)
 
                 if self._current_cat in self._notif_cats:
-                    sublime.message_dialog(self._current_msg)
+                    sublime.message_dialog(self._current_line)
 
-            self._current_msg = ''
+            self._process_current_exc()
 
-            self._process_current_exc_stack()
+            self._current_line = ''
 
-            
-    def _process_current_exc_stack(self):
+    def _process_current_exc(self):
         ''' Handled current unhandled exception if active. '''
         if self._current_cat == CAT_UEXC:
-            if self._exc_end:
+            if self._exc_stack_end:
                 if self._exc_count < 1:  # Don't pester the user, do this once.
                     self._exc_count += 1
-                    sublime.message_dialog('Unhandled exception!\n' + self._exc_text)
-                self._exc_text = ''
-                self._exc_end = False
-
+                    sublime.message_dialog('Unhandled exception!\nGo look in the log.\n' + self._current_line)
+                self._exc_stack_end = False
 
     def _trace(self, message, exc=None):
-        ''' Debug helper because stdout is probably hosed. '''
+        ''' Debug helper because stdout is probably broken. '''
         if self._enable_trace:
             trc_file = self._log_fn.replace('.log', '_trace.log')
 
@@ -240,162 +200,3 @@ class SbotALogger(io.TextIOBase):
                 if exc is not None:
                     import traceback
                     traceback.print_exc(file=f)
-
-
-    def write_xxx(self, message):
-        ''' Process one part. Look for EOL. Process unhandled exceptions.
-        Warning! Do not print() in here - recursive death.
-        '''
-
-        # Exception text ending? TODO is there a better way than this?
-        # ZeroDivisionError: division by zero
-        if message.strip() == ':':
-            self._exc_end = True
-
-        # Either starting a new message or in the middle of one.
-        if len(self._current_msg) == 0:  # new
-            self._current_msg = message
-            self._msg_time = time.localtime()
-            self._exc_text = []
-
-            # Check for category.
-            parts = message.split(' ')
-
-            if len(parts) > 0:
-                # Check for exception stack.
-                if parts[0] == 'Traceback':
-                    self._current_cat = CAT_UEXC
-                    self._current_msg = self._current_cat + ' ' + self._current_msg # insert cat
-                    self._exc_end = False
-                # Check for canned category preamble.
-                elif len(parts[0]) == 4:  # 4 is fixed for all internal logging.
-                    self._current_cat = parts[0]
-                # Continue exception.
-                elif self._current_cat == CAT_UEXC:
-                    self._current_msg = self._current_cat + ' ' + self._current_msg # insert cat
-                # Assume loose print() or ST internals, etc.
-                else:
-                    self._current_cat = CAT_OTHER
-                    self._current_msg = self._current_cat + ' ' + self._current_msg # insert cat
-
-        else:  # continuing
-            self._current_msg += message
-
-        # Check for line complete.
-        if '\n' in self._current_msg:
-
-            # Process unhandled exceptions.
-            if self._current_cat == CAT_UEXC:
-                self._exc_text += message
-
-                if self._exc_end:
-                    if self._exc_count < 1:  # Don't pester the user, do this once.
-                        self._exc_count += 1
-                        sublime.message_dialog('Unhandled exception!\n' + self._exc_text)
-                    self._exc_text = None
-                    self._exc_end = False
-
-            # Format and print the log record.
-            if self._current_cat not in self._ignore_cats:
-                # Format time.
-                if self._time_format is None:
-                    outmsg = f'{self._current_msg}'
-                elif len(self._time_format) > 0:
-                    outmsg = f'{time.strftime(self._time_format, self._msg_time)} {self._current_msg}'
-                else:
-                    time_str = f'{str(datetime.now())}'[0:-3]
-                    outmsg = f'{time_str} {self._current_msg}'
-
-                # Always write to console.
-                self._console_stdout.write(outmsg)
-                self._console_stdout.flush()
-
-                # Maybe write to file.
-                if self._mode != 'off':
-                    with open(self._log_fn, "a") as log:
-                        log.write(outmsg)
-
-                if self._current_cat in self._notif_cats:
-                    sublime.message_dialog(self._current_msg)
-
-            self._current_msg = ''
-
-
-
-
-    # def write_not(self, message):
-    #     ''' Write one. Hooked stdout/stderr. Process unhandled exceptions. '''
-    #     # Warning! Do not print() in here - recursive death.
-
-    #     # self._trace(message) TODO this msg isn't exactly like what gets print() - broken into multiple lines, missing white space...
-    #     cmsg = message #.rstrip()
-
-    #     cmsg = cmsg.replace('\n', 'N\n')
-    #     cmsg = cmsg.replace('\r', 'R\r')
-
-    #     if len(cmsg) > 0:
-
-    #         # Sniff the line. Check for category.
-    #         cat = None
-    #         parts = cmsg.split(' ')
-
-    #         if len(parts) > 0:
-    #             # Start of exception message?
-    #             if parts[0] == 'Traceback':
-    #                 self._exc_text = []
-    #                 self._exc_text.append('Unhandled exception!')
-    #                 self._exc_text.append(cmsg)
-    #                 cat = 'UEXC'
-    #                 cmsg = f'{cat} {cmsg}'
-
-    #             elif len(parts[0]) == 4: # 4 is fixed for all internal logging.
-    #                 # Finished exc block by virtue of non-exception record?
-    #                 if self._exc_text is not None and self._exc_count < 1: # Don't pester the user, do this once.
-    #                     self._exc_count += 1
-    #                     # sublime.message_dialog('\n'.join(self._exc_text))
-    #                     sublime.message_dialog(''.join(self._exc_text))
-    #                 self._exc_text = None
-
-    #                 # Back to normal.
-    #                 cat = parts[0]
-
-    #             elif self._exc_text is not None:
-    #                 # Currently in an exc block.
-    #                 self._exc_text.append(cmsg)
-    #                 cat = 'UEXC'
-    #                 cmsg = f'{cat} {cmsg}'
-
-    #                 # If the last entry was ':', we're done - probably not robust.
-    #                 if self._exc_text[-2] == ':' and self._exc_count < 1: # Don't pester the user, do this once. TODO dupe of above.
-    #                     self._exc_count += 1
-    #                     sublime.message_dialog(''.join(self._exc_text))
-    #                     # sublime.message_dialog('\n'.join(self._exc_text))
-    #                     self._exc_text = None
-                    
-    #             else:
-    #                 # Other print() - loose or from internal ST.
-    #                 cat = '----'
-    #                 cmsg = f'{cat} {cmsg}'
-
-    #         # Now output the line.
-    #         if cat is not None and cat not in self._ignore_cats:
-    #             # Format time.
-    #             if self._time_format is None:
-    #                 outmsg = f'{cmsg}\n'
-    #             elif len(self._time_format) > 0:
-    #                 outmsg = f'{time.strftime(self._time_format, time.localtime())} {cmsg}\n'
-    #             else:
-    #                 time_str = f'{str(datetime.now())}'[0:-3]
-    #                 outmsg = f'{time_str} {cmsg}\n'
-
-    #             # Always write to console.
-    #             self._console_stdout.write(outmsg)
-    #             self._console_stdout.flush()
-
-    #             # Maybe write to file.
-    #             if self._mode is not None:
-    #                 with open(self._log_fn, "a") as log:
-    #                     log.write(outmsg)
-
-    #             if cat in self._notif_cats:
-    #                 sublime.message_dialog(cmsg)
