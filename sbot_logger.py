@@ -135,7 +135,7 @@ class SbotALogger(io.TextIOBase):
                     self._current_cat = CAT_UEXC
                     self._current_line = CAT_UEXC + ' ' + message  # insert cat
 
-                # Check for canned category preamble from common slog(). 4 is fixed for all internal logging (SbotCommon.slog().
+                # Check for canned category preamble from common slog(). 4 is fixed for all internal logging (see SbotCommon.slog().
                 # This is a bit brittle - will accept any sentence with four letter start word! Maybe that's not a big deal.
                 elif len(parts[0]) == 4:  
                     self._process_current_exc()
