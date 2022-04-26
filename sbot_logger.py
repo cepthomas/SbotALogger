@@ -7,6 +7,11 @@ import io
 from datetime import datetime
 import sublime
 
+try:
+    from SbotCommon.sbot_common import get_store_fn
+except ModuleNotFoundError as e:
+    raise ImportError('SbotALogger plugin requires SbotCommon plugin')
+
 
 # The singleton logger.
 _logger = None
@@ -66,10 +71,7 @@ class SbotALogger(io.TextIOBase):
             self._mode = settings.get('mode')
 
             file_path = settings.get('file_path')
-            if file_path is None or len(file_path) == 0:
-                file_path = os.path.join(sublime.packages_path(), 'User', 'SbotStore')
-            pathlib.Path(file_path).mkdir(parents=True, exist_ok=True)
-            self._log_fn = os.path.join(file_path, 'sbot.log')
+            self._log_fn = get_store_fn(file_path, 'sbot.log')
 
             self._notif_cats = settings.get('notify_cats')
             self._ignore_cats = settings.get('ignore_cats')
