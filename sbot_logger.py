@@ -4,18 +4,20 @@ import time
 import shutil
 import pathlib
 import io
-from datetime import datetime
+import datetime
 import sublime
 
 try:
     from SbotCommon.sbot_common import get_store_fn
-except ModuleNotFoundError as e:
+except ModuleNotFoundError:
+    sublime.message_dialog('SbotALogger plugin requires SbotCommon plugin')
     raise ImportError('SbotALogger plugin requires SbotCommon plugin')
 
 
 # The singleton logger.
 _logger = None
 
+LOGGER_SETTINGS_FILE = "SbotALogger.sublime-settings"
 
 # Internal categories.
 CAT_UEXC = 'UEXC'
@@ -67,7 +69,7 @@ class SbotALogger(io.TextIOBase):
 
         try:
             # Get the settings.
-            settings = sublime.load_settings("SbotALogger.sublime-settings")
+            settings = sublime.load_settings(LOGGER_SETTINGS_FILE)
             self._mode = settings.get('mode')
 
             file_path = settings.get('file_path')
@@ -164,7 +166,7 @@ class SbotALogger(io.TextIOBase):
                 elif len(self._time_format) > 0:
                     out_line = f'{time.strftime(self._time_format, self._line_time)} {self._current_line}'
                 else:
-                    time_str = f'{str(datetime.now())}'[0:-3]
+                    time_str = f'{str(datetime.datetime.now())}'[0:-3]
                     out_line = f'{time_str} {self._current_line}'
 
                 # Always write to console.
