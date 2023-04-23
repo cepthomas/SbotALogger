@@ -21,7 +21,7 @@ LOGGER_SETTINGS_FILE = "SbotALogger.sublime-settings"
 
 # Internal categories.
 CAT_UEXC = 'UEXC'
-CAT_OTHER = '----'
+CAT_NONE = '----'
 
 
 #-----------------------------------------------------------------------------------
@@ -135,7 +135,7 @@ class SbotALogger(io.TextIOBase):
                 if parts[0] == 'Traceback':
                     self._process_current_exc()
                     self._current_cat = CAT_UEXC
-                    self._current_line = CAT_UEXC + ' ' + message  # insert cat
+                    self._current_line = CAT_UEXC + ' 1! ' + message  # insert cat
 
                 # Check for canned category preamble from common slog(). 4 is fixed for all internal logging (see SbotCommon.slog().
                 # This is a bit brittle - will accept any sentence with four letter start word! Maybe that's not a big deal.
@@ -145,13 +145,13 @@ class SbotALogger(io.TextIOBase):
                     self._current_line = message
 
                 # Continue exception stack.
-                elif self._current_cat == CAT_UEXC:
-                    self._current_line = CAT_UEXC + ' ' + message  # insert cat
+                elif self._current_cat == CAT_UEXC: # TODO gets stuck on this one
+                    self._current_line = CAT_UEXC + ' 2! ' + message  # insert cat
 
                 # Assume loose print() or ST internals, etc.
                 else:
-                    self._current_cat = CAT_OTHER
-                    self._current_line = CAT_OTHER + ' ' + message  # insert cat
+                    self._current_cat = CAT_NONE
+                    self._current_line = CAT_NONE + ' ' + message  # insert cat
 
         else:  # continuing line
             self._current_line += message

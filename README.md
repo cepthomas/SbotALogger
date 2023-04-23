@@ -22,10 +22,10 @@ None
 
 ## Settings
 
-| Setting            | Description                     | Options   |
-| :--------          | :-------                        | :------   |
-| `file_path`        | Path to the logfile folder      | if empty default is `%data_dir%\Packages\User\.SbotStore` |
-| `mode`             | Logfile add mode                | `append` OR `clean` (on start) OR `off` |
+| Setting            | Description                     | Options                                                               |
+| :--------          | :-------                        | :------                                                               |
+| `file_path`        | Path to the logfile folder      | if empty default is `%data_dir%\Packages\User\.SbotStore`             |
+| `mode`             | Logfile add mode                | `append` OR `clean` (on start) OR `off`                               |
 | `time_format`      | How to format (strftime)        | `strftime format` OR empty (default timestamp) OR null (no timestamp) |
-| `ignore_cats`      | Ignore these user categories    | comma separated strings |
-| `notify_cats`      | Notify user if in categories    | comma separated strings |
+| `ignore_cats`      | Ignore these user categories    | comma separated strings                                               |
+| `notify_cats`      | Notify user if in categories    | comma separated strings                                               |
