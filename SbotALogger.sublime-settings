@@ -1,8 +1,6 @@
 {
     // See README.md.
-    "file_path": "",
-    "size": 50,
-    // "time_format": "",
-    // "ignore_cats": [],
-    // "notify_cats": ["ERR", "WRN"],
+    "file_size": 50,
+    "ignore_cats": [],
+    "notify_cats": ["EXC", "ERR", "WRN"],
 }
