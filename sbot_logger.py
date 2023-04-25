@@ -1,8 +1,6 @@
 import os
 import sys
-# import time
 import shutil
-# import pathlib
 import io
 import datetime
 import traceback
@@ -34,20 +32,6 @@ def plugin_loaded():
 def plugin_unloaded():
     global _logger
     _logger.stop()
-
-
-#-----------------------------------------------------------------------------------
-def notify_exception(type, value, tb):
-    ''' Process unhandled exceptions and log, notify user. '''
-    tb_info = '\n'.join(traceback.extract_tb(tb).format())
-    # msg = f'{sbot.CAT_EXC} {type}: {value}\n{tb_info.replace('\n\n', '\n')}' TODO get rid of spaces
-    msg = f'{sbot.CAT_EXC} {type}: {value}\n{tb_info}'
-
-    print(msg)
-
-
-# Connect the hook.
-sys.excepthook = notify_exception
 
 
 #-----------------------------------------------------------------------------------
@@ -97,12 +81,6 @@ class SbotALogger(io.TextIOBase):
         if self._console_stderr is not None:
             sys.stderr = self._console_stderr
 
-    def write_console(self, msg):
-        ''' Write default console. '''
-        if self._console_stdout is not None:
-            self._console_stdout.write(f'{msg}\n')
-            self._console_stdout.flush()
-
     def write(self, message):
         ''' Format record and write to file and/or stdout. Warning! Do not print() in here - recursive death.'''
 
@@ -124,7 +102,7 @@ class SbotALogger(io.TextIOBase):
 
             # Write to console also.
             if self._write_to_console:
-                self.write_console(out_line)
+                self._write_console(out_line)
 
             # Maybe write to file.
             if self._file_size > 0:
@@ -134,9 +112,9 @@ class SbotALogger(io.TextIOBase):
                         # Roll over.
                         bup = self._log_fn.replace('.log', '_old.log')
                         shutil.copyfile(self._log_fn, bup)
-                    # Clear current log file.
-                    with open(self._log_fn, "w"):
-                        pass
+                        # Clear current log file.
+                        with open(self._log_fn, "w"):
+                            pass
 
                 # Write the record
                 with open(self._log_fn, "a") as log:
@@ -146,6 +124,12 @@ class SbotALogger(io.TextIOBase):
             # if self._current_cat in self._notify_cats:
             if cat in self._notify_cats:
                 sublime.message_dialog(message)
+
+    def _write_console(self, msg):
+        ''' Write default console. '''
+        if self._console_stdout is not None:
+            self._console_stdout.write(f'{msg}\n')
+            self._console_stdout.flush()
 
     def _trace(self, message, exc=None):
         ''' Debug helper because stdout is probably broken. '''
@@ -157,3 +141,15 @@ class SbotALogger(io.TextIOBase):
                 if exc is not None:
                     import traceback
                     traceback.print_exc(file=f)
+
+#-----------------------------------------------------------------------------------
+def _notify_exception(type, value, tb):
+    ''' Process unhandled exceptions and log, notify user. '''
+    tb_info = '\n'.join(traceback.extract_tb(tb).format())
+    msg = f'{sbot.CAT_EXC} {type}: {value}\n{tb_info}'
+
+    print(msg)
+
+
+# Connect the hook.
+sys.excepthook = _notify_exception
