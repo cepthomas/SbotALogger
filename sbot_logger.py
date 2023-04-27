@@ -4,7 +4,6 @@ import shutil
 import io
 import datetime
 import traceback
-# import inspect
 import sublime
 
 try:
@@ -36,7 +35,7 @@ def plugin_unloaded():
 
 #-----------------------------------------------------------------------------------
 class SbotALogger(io.TextIOBase):
-    # The original outputs.
+    # The original outputs to ST console.
     _console_stdout = None
     _console_stderr = None
 
