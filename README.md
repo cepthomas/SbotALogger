@@ -5,7 +5,7 @@ A tool to make debugging plugins a bit easier.
 - Intercepts the ST console write and copies to a file.
 - Adds timestamp and three letter category.
 - Examines the first word to identify as a user supplied category. These are fixed at
-  3 characters to match the slog(cat, message) function in [SbotCommon](https://github.com/cepthomas/SbotCommon).
+  3 characters to match the slog(cat, message) function in `sbot_commom.py`
 - If the category appear in `notify_cats`, a dialog is presented. Those in `ignore_cats` are ignored.
 - Captures unhandled exceptions (e.g. ST internal) and notifies the user. This is done once - assumes you have to go fix your problem before continuing.
   Note that this doesn't show up until the current view loses focus.
@@ -14,8 +14,6 @@ A tool to make debugging plugins a bit easier.
 
 
 Built for ST4 on Windows and Linux.
-
-Requires [SbotCommon](https://github.com/cepthomas/SbotCommon) plugin.
 
 ## Commands
 
