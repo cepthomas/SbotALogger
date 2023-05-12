@@ -2,6 +2,8 @@
 
 A tool to make debugging plugins a bit easier.
 
+Built for ST4 on Windows and Linux.
+
 - Intercepts the ST console write and copies to a file.
 - Adds timestamp and three letter category.
 - Examines the first word to identify as a user supplied category. These are fixed at
@@ -12,8 +14,6 @@ A tool to make debugging plugins a bit easier.
 - The 'A' in the name enforces loading before other Sbot components.
 - Log files are in `%data_dir%\Packages\User\.SbotStore`.
 
-
-Built for ST4 on Windows and Linux.
 
 ## Commands
 
