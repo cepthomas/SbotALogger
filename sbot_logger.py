@@ -5,7 +5,7 @@ import io
 import datetime
 import traceback
 import sublime
-from .sbot_common import *
+from . import sbot_common as sc
 
 
 # The singleton logger.
@@ -48,7 +48,7 @@ class SbotALogger(io.TextIOBase):
         try:
             # Get the settings.
             settings = sublime.load_settings(LOGGER_SETTINGS_FILE)
-            self._log_fn = get_store_fn('sbot.log')
+            self._log_fn = sc.get_store_fn('sbot.log')
             self._file_size = settings.get('file_size')
             self._notify_cats = settings.get('notify_cats')
             self._ignore_cats = settings.get('ignore_cats')
@@ -139,8 +139,8 @@ class SbotALogger(io.TextIOBase):
 #-----------------------------------------------------------------------------------
 def _notify_exception(type, value, tb):
     ''' Process unhandled exceptions and log, notify user. '''
-    tb_info = '\n'.join(traceback.extract_tb(tb).format()) # TODO sometimes get extra blank lines
-    msg = f'{CAT_EXC} {type}: {value}\n{tb_info}'
+    tb_info = '\n'.join(traceback.extract_tb(tb).format())  # TODO sometimes get extra blank lines
+    msg = f'{sc.CAT_EXC} {type}: {value}\n{tb_info}'
 
     print(msg)
 
