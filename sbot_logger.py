@@ -84,15 +84,20 @@ class SbotALogger(io.TextIOBase):
         if len(message) == 1 and message[0] == '\n':
             return
 
-        # Get the category. This is a bit clumsy.
-        # Looks like:date time CAT text text ...
+        # Message should look like: "CAT text text ..."
+        # Get the category. This is a bit clumsy. Multiline messages like exceptions will not have a category.
         parts = message.split(' ')
         cat = parts[0] if len(parts) >= 2 else ''
 
+        valid_cat = cat in sc.ALL_CATS
+
         if cat not in self._ignore_cats:
             # Format and print the log record.
-            time_str = f'{str(datetime.datetime.now())}'[0:-3]
-            out_line = f'{time_str} {message}'
+            if valid_cat:
+                time_str = f'{str(datetime.datetime.now())}'[0:-3]
+                out_line = f'{time_str} {message}'
+            else:
+                out_line = f'{message}'
 
             # Write to console also.
             if self._write_to_console:
@@ -139,11 +144,10 @@ class SbotALogger(io.TextIOBase):
 #-----------------------------------------------------------------------------------
 def _notify_exception(type, value, tb):
     ''' Process unhandled exceptions and log, notify user. '''
-    tb_info = '\n'.join(traceback.extract_tb(tb).format())  # TODO sometimes get extra blank lines
-    msg = f'{sc.CAT_EXC} {type}: {value}\n{tb_info}'
 
+    msg = f'{sc.CAT_ERR} Unhandled exception {type}: {value}'
     print(msg)
-
+    traceback.print_tb(tb)
 
 # Connect the hook.
 sys.excepthook = _notify_exception
