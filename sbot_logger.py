@@ -142,10 +142,10 @@ class SbotALogger(io.TextIOBase):
                     traceback.print_exc(file=f)
 
 #-----------------------------------------------------------------------------------
-def _notify_exception(type, value, tb):
+def _notify_exception(tp, value, tb):
     ''' Process unhandled exceptions and log, notify user. '''
 
-    msg = f'{sc.CAT_ERR} Unhandled exception {type}: {value}'
+    msg = f'{sc.CAT_ERR} Unhandled exception {tp}: {value}'
     print(msg)
     traceback.print_tb(tb)
 
