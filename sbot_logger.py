@@ -145,7 +145,7 @@ class SbotALogger(io.TextIOBase):
 def _notify_exception(tp, value, tb):
     ''' Process unhandled exceptions and log, notify user. '''
 
-    msg = f'{sc.CAT_ERR} Unhandled exception {tp}: {value}'
+    msg = f'{sc.CAT_ERR} Unhandled exception {tp.__name__}: {value} >>> see the log'
     print(msg)
     traceback.print_tb(tb)
 
