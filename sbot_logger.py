@@ -7,6 +7,7 @@ import traceback
 import sublime
 from . import sbot_common as sc
 
+print('>>>>>>> Load sbot_common.py')
 
 # The singleton logger.
 _logger = None
