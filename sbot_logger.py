@@ -89,15 +89,10 @@ class SbotALogger(io.TextIOBase):
         parts = message.split(' ')
         cat = parts[0] if len(parts) >= 2 else ''
 
-        valid_cat = cat in sc.ALL_CATS
-
         if cat not in self._ignore_cats:
             # Format and print the log record.
-            if valid_cat:
-                time_str = f'{str(datetime.datetime.now())}'[0:-3]
-                out_line = f'{time_str} {message}'
-            else:
-                out_line = f'{message}'
+            time_str = f'{str(datetime.datetime.now())}'[0:-3]
+            out_line = f'{time_str} {message}'
 
             # Write to console also.
             if self._write_to_console:
