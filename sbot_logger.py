@@ -133,14 +133,13 @@ class SbotALogger(io.TextIOBase):
             with open(trc_file, 'a') as f:
                 f.write(f'{message}\n')
                 if exc is not None:
-                    import traceback
                     traceback.print_exc(file=f)
 
 #-----------------------------------------------------------------------------------
 def _notify_exception(tp, value, tb):
     ''' Process unhandled exceptions and log, notify user. '''
 
-    msg = f'{sc.CAT_ERR} Unhandled exception {tp.__name__}: {value} >>> see the log'
+    msg = f'{sc.CAT_ERR} Unhandled exception {tp.__name__}: {value}'
     print(msg)
     traceback.print_tb(tb)
 
