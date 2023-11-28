@@ -78,21 +78,21 @@ class SbotALogger(io.TextIOBase):
     def write(self, message):
         ''' Format record and write to file and/or stdout. Warning! Do not print() in here - recursive death.'''
 
-        # Sometimes get stray lines.
+        # Sometimes get stray empty lines.
         if len(message) == 0:
             return
         if len(message) == 1 and message[0] == '\n':
             return
 
         # Message should look like: "CAT text text ..."
-        # Get the category. This is a bit clumsy. Multiline messages like exceptions will not have a category.
-        parts = message.split(' ')
-        cat = parts[0] if len(parts) >= 2 else ''
+        # Get the category if available. This is a bit kludgy.
+        cat = message[:3]
+        valid_cat = cat in sc.ALL_CATS
 
         if cat not in self._ignore_cats:
             # Format and print the log record.
             time_str = f'{str(datetime.datetime.now())}'[0:-3]
-            out_line = f'{time_str} {message}'
+            out_line = f'{time_str} {message}' if valid_cat else message
 
             # Write to console also.
             if self._write_to_console:
@@ -115,7 +115,6 @@ class SbotALogger(io.TextIOBase):
                     log.write(out_line + '\n')
                     log.flush()
 
-            # if self._current_cat in self._notify_cats:
             if cat in self._notify_cats:
                 sublime.message_dialog(message)
 
@@ -141,7 +140,10 @@ def _notify_exception(tp, value, tb):
 
     msg = f'{sc.CAT_ERR} Unhandled exception {tp.__name__}: {value}'
     print(msg)
-    traceback.print_tb(tb)
+
+    stb = traceback.format_tb(tb)
+    for s in stb:
+        print(s) # some blank lines slip in...
 
 # Connect the hook.
 sys.excepthook = _notify_exception
