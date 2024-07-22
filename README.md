@@ -1,3 +1,5 @@
+# NOTE - refactored into [SublimeBagOfTricks](https://github.com/cepthomas/SublimeBagOfTricks)
+
 # SbotALogger
 
 A simple logger for use by the sbot family of plugins. It works in conjunction with `def slog(str, message)` in
